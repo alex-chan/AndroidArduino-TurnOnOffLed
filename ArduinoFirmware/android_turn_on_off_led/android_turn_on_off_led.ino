@@ -5,8 +5,8 @@
 #include <adk.h>
 
 USB Usb;
-ADK adk(&Usb,"mollocer.com", // Manufacturer Name
-             "TurnOnOffLed", // Model Name
+ADK adk(&Usb,"TKJElectronics", // Manufacturer Name
+             "ArduinoBlinkLED", // Model Name
              "Example sketch for the USB Host Shield", // Description (user-visible string)
              "1.0", // Version
              "http://www.tkjelectronics.dk/uploads/ArduinoBlinkLED.apk", // URL (web page to visit if no installed apps support the accessory)
@@ -18,22 +18,24 @@ void setup()
 {
   Serial.begin(115200);
   Serial.print("\r\nADK demo start");
+
+  
   if (Usb.Init() == -1) {
     Serial.print("\r\nOSCOKIRQ failed to assert");
     while(1); //halt
   }
+  
   pinMode(LED, OUTPUT);
 }
 
 void loop()
 {    
+ 
   Usb.Task();
   if(adk.isReady()) {
-    Serial.println("ADK ready");
     uint8_t msg[1];
     uint16_t len = sizeof(msg);
     uint8_t rcode = adk.RcvData(&len, msg);
-    
     if(rcode && rcode != hrNAK)
       USBTRACE2("Data rcv. :", rcode);
     if(len > 0) {
@@ -43,8 +45,9 @@ void loop()
     }
   } 
   else{
-    
+   
     digitalWrite(LED, LOW); 
+    
   }
-  delay(10);
+
 }

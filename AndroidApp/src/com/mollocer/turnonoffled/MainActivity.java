@@ -33,7 +33,7 @@ public class MainActivity extends Activity {
 	
 	private TextView mTvLedStatus ;
 	private ToggleButton mTbLedSwitch;
-
+	private TextView mTvLog;
 	
 	private UsbManager mUsbManager;
 	private PendingIntent mPermissionIntent;
@@ -50,14 +50,19 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
         
         
+        mTvLog = (TextView)findViewById(R.id.textViewLog);
+        
         mUsbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
         
 		mPermissionIntent = PendingIntent.getBroadcast(this, 0, new Intent(
 				ACTION_USB_PERMISSION), 0);
 		IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
+		filter.addAction(UsbManager.ACTION_USB_ACCESSORY_ATTACHED);
 		filter.addAction(UsbManager.ACTION_USB_ACCESSORY_DETACHED);
 		registerReceiver(mUsbReceiver, filter);
-
+		
+		mTvLog.setText("mUsbReceiver registered");
+		
 		if (getLastNonConfigurationInstance() != null) {
 			mAccessory = (UsbAccessory) getLastNonConfigurationInstance();
 			openAccessory(mAccessory);
@@ -133,9 +138,11 @@ public class MainActivity extends Activity {
 			
 				if( isChecked){					
 					mTvLedStatus.setText(R.string.led_is_on);
+					mTvLog.setText(mTvLog.getText() + "\nLed on" );
 					sendTurnOnLedCommand();
 				}else{
 					mTvLedStatus.setText(R.string.led_is_off);
+					mTvLog.setText(mTvLog.getText() + "\nLed off" );
 					sendTurnOffLedCommand();
 				}
 			}
@@ -164,7 +171,11 @@ public class MainActivity extends Activity {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-
+            
+            
+            mTvLog.setText(mTvLog.getText() + "\nonReceive action:" + action );
+            
+            
             if(ACTION_USB_PERMISSION.equals(action)){
 
 
@@ -177,6 +188,7 @@ public class MainActivity extends Activity {
                             UsbManager.EXTRA_PERMISSION_GRANTED,false)){
                         openAccessory(accessory);
                     }else{
+                    	mTvLog.setText(mTvLog.getText() + "\npermission denied for accessory:" + accessory );
                         Log.d(TAG, "permission denied for accessory"
                                 + accessory);
                     }
@@ -204,9 +216,11 @@ public class MainActivity extends Activity {
             //Thread thread = new Thread(null, this, "TurnOnOffLedDemo");
             //thread.start();
             Log.d(TAG, "accessory opened");
+            mTvLog.setText(mTvLog.getText() + "\naccessory opened" );
             enableControls(true);
         } else {
             Log.d(TAG, "accessory open fail");
+            mTvLog.setText(mTvLog.getText() + "\naccessory open fail" );
         }
     }
 
@@ -247,6 +261,7 @@ public class MainActivity extends Activity {
 				mOutputStream.write(buffer);
 			} catch (IOException e) {
 				Log.e(TAG, "write failed", e);
+				mTvLog.setText(mTvLog.getText() + "\nwrite failed" + e.toString() );
 			}
 		}		
 	}

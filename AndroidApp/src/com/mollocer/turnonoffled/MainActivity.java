@@ -5,8 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-import com.android.future.usb.UsbAccessory;
-import com.android.future.usb.UsbManager;
+
 
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
@@ -16,6 +15,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.hardware.usb.UsbAccessory;
+import android.hardware.usb.UsbManager;
 import android.util.Log;
 import android.view.Menu;
 import android.widget.CompoundButton;
@@ -48,7 +49,9 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         
-        mUsbManager = UsbManager.getInstance(this);
+        
+        mUsbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
+        
 		mPermissionIntent = PendingIntent.getBroadcast(this, 0, new Intent(
 				ACTION_USB_PERMISSION), 0);
 		IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
@@ -84,9 +87,10 @@ public class MainActivity extends Activity {
 		if (mInputStream != null && mOutputStream != null) {
 			return;
 		}
+		
+		UsbAccessory accessory = (UsbAccessory) intent.getParcelableExtra(UsbManager.EXTRA_ACCESSORY);
+		
 
-		UsbAccessory[] accessories = mUsbManager.getAccessoryList();
-		UsbAccessory accessory = (accessories == null ? null : accessories[0]);
 		if (accessory != null) {
 			if (mUsbManager.hasPermission(accessory)) {
 				openAccessory(accessory);
@@ -165,7 +169,10 @@ public class MainActivity extends Activity {
 
 
                 synchronized (this){
-                    UsbAccessory accessory = UsbManager.getAccessory(intent);
+                	
+                	UsbAccessory accessory = (UsbAccessory) intent.getParcelableExtra(UsbManager.EXTRA_ACCESSORY);
+                	                    
+            		
                     if( intent.getBooleanExtra(
                             UsbManager.EXTRA_PERMISSION_GRANTED,false)){
                         openAccessory(accessory);
@@ -177,7 +184,8 @@ public class MainActivity extends Activity {
                 }
 
             }else if (UsbManager.ACTION_USB_ACCESSORY_DETACHED.equals(action)) {
-                UsbAccessory accessory = UsbManager.getAccessory(intent);
+                
+                UsbAccessory accessory = (UsbAccessory) intent.getParcelableExtra(UsbManager.EXTRA_ACCESSORY);
                 if (accessory != null && accessory.equals(mAccessory)) {
                     closeAccessory();
                 }
@@ -222,22 +230,28 @@ public class MainActivity extends Activity {
 
 	protected void sendTurnOffLedCommand() {
 		
-		byte command = 0x01;
-		byte target =  0x00;
-		int value =   0;
-		sendCommand(command,target,value);
+		byte command = 0x1;		
+		sendCommand(command);
 	}
 
 
 	protected void sendTurnOnLedCommand() {
-		byte command = 0x01;
-		byte target =  0x00;
-		int value =   1;
-		sendCommand(command,target,value);
+		byte command = 0x00;		
+		sendCommand(command);
 	}
     
+	public void sendCommand(byte command){
+		byte[] buffer = new byte[1];
+		if (mOutputStream != null && buffer[0] != -1) {
+			try {
+				mOutputStream.write(buffer);
+			} catch (IOException e) {
+				Log.e(TAG, "write failed", e);
+			}
+		}		
+	}
     
-	public void sendCommand(byte command, byte target, int value) {
+	public void sendCommand2(byte command, byte target, int value) {
 		byte[] buffer = new byte[3];
 		if (value > 255)
 			value = 255;

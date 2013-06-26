@@ -5,32 +5,33 @@
 #include <adk.h>
 
 USB Usb;
-ADK adk(&Usb,"TKJElectronics", // Manufacturer Name
-             "ArduinoBlinkLED", // Model Name
+ADK adk(&Usb,"mollocer.com", // Manufacturer Name
+             "TurnOnOffLed", // Model Name
              "Example sketch for the USB Host Shield", // Description (user-visible string)
              "1.0", // Version
              "http://www.tkjelectronics.dk/uploads/ArduinoBlinkLED.apk", // URL (web page to visit if no installed apps support the accessory)
              "123456789"); // Serial Number (optional)
 
-#define LED 13 // Pin 13 is occupied by the SCK pin on a normal Arduino (Uno, Duemilanove etc.), so use a different pin
+#define LED 3 // Pin 13 is occupied by the SCK pin on a normal Arduino (Uno, Duemilanove etc.), so use a different pin
+#define GND 2
 
 void setup()
 {
   Serial.begin(115200);
   Serial.print("\r\nADK demo start");
-
-  
   if (Usb.Init() == -1) {
     Serial.print("\r\nOSCOKIRQ failed to assert");
     while(1); //halt
   }
-  
   pinMode(LED, OUTPUT);
+  pinMode(GND, OUTPUT);
+  digitalWrite(LED,HIGH);
+  digitalWrite(GND,LOW);
+  
 }
 
 void loop()
 {    
- 
   Usb.Task();
   if(adk.isReady()) {
     uint8_t msg[1];
@@ -44,10 +45,6 @@ void loop()
       digitalWrite(LED,msg[0] ? HIGH : LOW);
     }
   } 
-  else{
-   
+  else
     digitalWrite(LED, LOW); 
-    
-  }
-
 }

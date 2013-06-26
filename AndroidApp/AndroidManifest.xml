@@ -7,15 +7,16 @@
 	<uses-feature android:name="android.hardware.usb.accessory" />
     
     <uses-sdk
-        android:minSdkVersion="12"
+        android:minSdkVersion="10"
         android:targetSdkVersion="17" />
 
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/AppTheme" >
+        android:theme="@style/AppBaseTheme" >
                 
+        <uses-library android:name="com.android.future.usb.accessory" />
         
         <activity
             android:name="com.mollocer.turnonoffled.MainActivity"

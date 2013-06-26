@@ -5,6 +5,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+import com.android.future.usb.UsbAccessory;
+import com.android.future.usb.UsbManager;
+
 
 
 import android.os.Bundle;
@@ -15,8 +18,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.hardware.usb.UsbAccessory;
-import android.hardware.usb.UsbManager;
+//import android.hardware.usb.UsbAccessory;
+//import android.hardware.usb.UsbManager;
 import android.util.Log;
 import android.view.Menu;
 import android.widget.CompoundButton;
@@ -26,7 +29,7 @@ import android.widget.ToggleButton;
 public class MainActivity extends Activity {
 	
 	
-    private final String TAG = "MainActivity";
+    private final String TAG = "TurnOnOffMainActivity";
     private static final String ACTION_USB_PERMISSION = "com.mollocer.turnonoffled.action.USB_PERMISSION";
     private boolean mPermissionRequestPending;
     
@@ -49,10 +52,12 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         
+        Log.d(TAG,"onCreate");
         
         mTvLog = (TextView)findViewById(R.id.textViewLog);
         
-        mUsbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
+//        mUsbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
+        mUsbManager = UsbManager.getInstance(this);
         
 		mPermissionIntent = PendingIntent.getBroadcast(this, 0, new Intent(
 				ACTION_USB_PERMISSION), 0);
@@ -63,12 +68,15 @@ public class MainActivity extends Activity {
 		
 		mTvLog.setText("mUsbReceiver registered");
 		
+		Log.d(TAG, "mUsbReceiver Registered");
+		
 		if (getLastNonConfigurationInstance() != null) {
 			mAccessory = (UsbAccessory) getLastNonConfigurationInstance();
 			openAccessory(mAccessory);
+			Log.d(TAG, "getLastNonConfigurationInstance mAccessory opened");
 		}
         
-        
+		Log.d(TAG, "listenToLedSwitch");
         listenToLedSwitch();
         
         
@@ -87,16 +95,23 @@ public class MainActivity extends Activity {
 	@Override
 	public void onResume() {
 		super.onResume();
-
+		Log.d(TAG,"onResume");
+		
 		Intent intent = getIntent();
+		Log.d(TAG,"get intent");
 		if (mInputStream != null && mOutputStream != null) {
+			Log.d(TAG,"mInput/OutputStream is Null, return");
 			return;
 		}
 		
-		UsbAccessory accessory = (UsbAccessory) intent.getParcelableExtra(UsbManager.EXTRA_ACCESSORY);
 		
-
+//		UsbAccessory accessory = (UsbAccessory) intent.getParcelableExtra(UsbManager.EXTRA_ACCESSORY);
+// 		UsbAccessory accessory = UsbManager.getAccessory(intent);
+		
+		UsbAccessory[] accessories = mUsbManager.getAccessoryList();
+		UsbAccessory accessory = (accessories == null ? null : accessories[0]);
 		if (accessory != null) {
+			Log.d(TAG,"accessory is Not null");
 			if (mUsbManager.hasPermission(accessory)) {
 				openAccessory(accessory);
 			} else {
@@ -170,23 +185,28 @@ public class MainActivity extends Activity {
 	private final BroadcastReceiver mUsbReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+        	
+
+        	Log.d(TAG, "Received action");
             String action = intent.getAction();
-            
+            Log.d(TAG, "onReceived action:"+action);
             
             mTvLog.setText(mTvLog.getText() + "\nonReceive action:" + action );
             
+            
+
             
             if(ACTION_USB_PERMISSION.equals(action)){
 
 
                 synchronized (this){
                 	
-                	UsbAccessory accessory = (UsbAccessory) intent.getParcelableExtra(UsbManager.EXTRA_ACCESSORY);
-                	                    
+//                	UsbAccessory accessory = (UsbAccessory) intent.getParcelableExtra(UsbManager.EXTRA_ACCESSORY);
+                	UsbAccessory accessory = UsbManager.getAccessory(intent);	
             		
                     if( intent.getBooleanExtra(
                             UsbManager.EXTRA_PERMISSION_GRANTED,false)){
-                        openAccessory(accessory);
+                        //openAccessory(accessory);
                     }else{
                     	mTvLog.setText(mTvLog.getText() + "\npermission denied for accessory:" + accessory );
                         Log.d(TAG, "permission denied for accessory"
@@ -197,7 +217,8 @@ public class MainActivity extends Activity {
 
             }else if (UsbManager.ACTION_USB_ACCESSORY_DETACHED.equals(action)) {
                 
-                UsbAccessory accessory = (UsbAccessory) intent.getParcelableExtra(UsbManager.EXTRA_ACCESSORY);
+//                UsbAccessory accessory = (UsbAccessory) intent.getParcelableExtra(UsbManager.EXTRA_ACCESSORY);
+                UsbAccessory accessory = UsbManager.getAccessory(intent);
                 if (accessory != null && accessory.equals(mAccessory)) {
                     closeAccessory();
                 }
@@ -244,18 +265,19 @@ public class MainActivity extends Activity {
 
 	protected void sendTurnOffLedCommand() {
 		
-		byte command = 0x1;		
+		byte command = 0x00;		
 		sendCommand(command);
 	}
 
 
 	protected void sendTurnOnLedCommand() {
-		byte command = 0x00;		
+		byte command = 0x01;		
 		sendCommand(command);
 	}
     
 	public void sendCommand(byte command){
 		byte[] buffer = new byte[1];
+		buffer[0] = command;
 		if (mOutputStream != null && buffer[0] != -1) {
 			try {
 				mOutputStream.write(buffer);

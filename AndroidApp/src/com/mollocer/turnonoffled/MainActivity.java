@@ -5,9 +5,12 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-import com.android.future.usb.UsbAccessory;
-import com.android.future.usb.UsbManager;
-
+// If Android version is below 3.1:
+//import com.android.future.usb.UsbAccessory;
+//import com.android.future.usb.UsbManager;
+// Else:
+import android.hardware.usb.UsbAccessory;
+import android.hardware.usb.UsbManager;
 
 
 import android.os.Bundle;
@@ -18,8 +21,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-//import android.hardware.usb.UsbAccessory;
-//import android.hardware.usb.UsbManager;
+
+
 import android.util.Log;
 import android.view.Menu;
 import android.widget.CompoundButton;
@@ -55,9 +58,10 @@ public class MainActivity extends Activity {
         Log.d(TAG,"onCreate");
         
         mTvLog = (TextView)findViewById(R.id.textViewLog);
-        
-//        mUsbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
-        mUsbManager = UsbManager.getInstance(this);
+        // If Android version is above 3.1:
+        mUsbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
+        // Else:
+        // mUsbManager = UsbManager.getInstance(this);
         
 		mPermissionIntent = PendingIntent.getBroadcast(this, 0, new Intent(
 				ACTION_USB_PERMISSION), 0);
@@ -105,11 +109,11 @@ public class MainActivity extends Activity {
 		}
 		
 		
-//		UsbAccessory accessory = (UsbAccessory) intent.getParcelableExtra(UsbManager.EXTRA_ACCESSORY);
+		UsbAccessory accessory = (UsbAccessory) intent.getParcelableExtra(UsbManager.EXTRA_ACCESSORY);
 // 		UsbAccessory accessory = UsbManager.getAccessory(intent);
 		
-		UsbAccessory[] accessories = mUsbManager.getAccessoryList();
-		UsbAccessory accessory = (accessories == null ? null : accessories[0]);
+//		UsbAccessory[] accessories = mUsbManager.getAccessoryList();
+//		UsbAccessory accessory = (accessories == null ? null : accessories[0]);
 		if (accessory != null) {
 			Log.d(TAG,"accessory is Not null");
 			if (mUsbManager.hasPermission(accessory)) {
@@ -201,8 +205,8 @@ public class MainActivity extends Activity {
 
                 synchronized (this){
                 	
-//                	UsbAccessory accessory = (UsbAccessory) intent.getParcelableExtra(UsbManager.EXTRA_ACCESSORY);
-                	UsbAccessory accessory = UsbManager.getAccessory(intent);	
+                	UsbAccessory accessory = (UsbAccessory) intent.getParcelableExtra(UsbManager.EXTRA_ACCESSORY);
+                	//UsbAccessory accessory = UsbManager.getAccessory(intent);	
             		
                     if( intent.getBooleanExtra(
                             UsbManager.EXTRA_PERMISSION_GRANTED,false)){
@@ -217,8 +221,8 @@ public class MainActivity extends Activity {
 
             }else if (UsbManager.ACTION_USB_ACCESSORY_DETACHED.equals(action)) {
                 
-//                UsbAccessory accessory = (UsbAccessory) intent.getParcelableExtra(UsbManager.EXTRA_ACCESSORY);
-                UsbAccessory accessory = UsbManager.getAccessory(intent);
+                UsbAccessory accessory = (UsbAccessory) intent.getParcelableExtra(UsbManager.EXTRA_ACCESSORY);
+//                UsbAccessory accessory = UsbManager.getAccessory(intent);
                 if (accessory != null && accessory.equals(mAccessory)) {
                     closeAccessory();
                 }
